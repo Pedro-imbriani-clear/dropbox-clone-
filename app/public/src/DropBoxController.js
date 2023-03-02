@@ -40,9 +40,9 @@ class DropBoxController {
         this.uploadTask(event.target.files).then(responses => {
           responses.forEach(resp => {
   
-            this.getFirebaseRef().push().set(resp.files['input-file'])
+            this.getFirebaseRef().push().set(resp.files ['input-file'])
           })
-  
+         
           this.uploadComplete()
   
         }).catch(err => {
@@ -307,26 +307,69 @@ class DropBoxController {
       }
     }
   
-    getFileView(file, key ) {
-      let li = document.createElement('li');
-      li.dataset.key = key;
-      li.innerHTML =`
-  
-          ${this.getFileIconView(file)}
-          <div class="name text-center">${file.name}s</div>
-      `
-      return li;
-      
-    }
-    readFiles(){
-    this.getFirebaseRef().on('value',snapshot=>{
-      this.listFilesEl.innerHTML = '';
-      snapshot.forEach(snapshotItem=>{
-        let key = snapshot.key;
-        let data = snapshotItem.val();
-        this.listFilesEl.appendChild(getFileView(data,key));
+    getFileView(file, key) {
 
+      let li = document.createElement('li')
+  
+      li.dataset.key = key
+  
+      li.innerHTML = `
+        ${this.getFileIconView(file)}
+        <div class="name text-center">${file.name}</div>
+      ` 
+      this.initEventsLi(li)
+  
+      return li;
+
+    }
+  
+    readFiles() {
+      this.getFirebaseRef().on('value', snapshot => {
+        this.listFilesEl.innerHTML = '';
+        snapshot.forEach(snapshotItem => {
+          let key = snapshotItem.key;
+          let data = snapshotItem.val()
+          
+          this.listFilesEl.appendChild(this.getFileView(data, key))
+        })
       })
-    })
+    }
+  
+    initEventsLi(li) {
+      li.addEventListener('click', e => {
+  
+        if (e.shiftKey) {
+          let firstLi = this.listFilesEl.querySelector('.selected');
+  
+          if (firstLi) {
+            let indexStart;
+            let indexEnd;
+            let lis = li.parentElement.childNodes;
+  
+            lis.forEach((el, index) => {
+              if (firstLi === el) indexStart = index;
+              if (li === el) indexEnd = index;
+            })
+            
+            let index = [indexStart, indexEnd].sort()
+  
+            lis.forEach((el, i) => {
+              if (i >= index[0] && i <= index[1]) {
+                el.classList.add('selected')
+              }
+            })
+            return true;
+          }
+        }
+  
+        if (!e.ctrlKey) {
+          this.listFilesEl.querySelectorAll('li.selected').forEach(el => {
+            el.classList.remove('selected')
+          })
+        }
+  
+        li.classList.toggle('selected')
+      })
+    }
+  
   }
-}
